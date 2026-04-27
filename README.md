@@ -292,7 +292,7 @@ The slug is generated client-side so the URL is immediately available for naviga
 
 ## Author
 
-**Mayur** — 3rd year CS student, indie developer
+**Karan Kumar** — Last Year BCA Student, indie developer
 
 Building real products to learn real engineering.
 
