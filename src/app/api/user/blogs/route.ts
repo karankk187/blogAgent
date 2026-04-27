@@ -2,6 +2,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { generateSlug, extractSummary, extractMarkdown } from "@/lib/slug";
+import { getOrCreateCurrentUser } from "@/lib/users";
 
 export async function GET() {
   const { userId: clerkId } = await auth();
@@ -9,14 +10,7 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clearkId: clerkId },
-    select: { id: true },
-  });
-
-  if (!user) {
-    return Response.json({ error: "User not found" }, { status: 404 });
-  }
+  const user = await getOrCreateCurrentUser(clerkId);
 
   const blogs = await prisma.blogPost.findMany({
     where: { userId: user.id },
@@ -49,14 +43,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clearkId: clerkId },
-    select: { id: true },
-  });
-
-  if (!user) {
-    return Response.json({ error: "User not found" }, { status: 404 });
-  }
+  const user = await getOrCreateCurrentUser(clerkId);
 
 //  unwrapp content
   const markdownContent = extractMarkdown(content);

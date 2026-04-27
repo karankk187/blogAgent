@@ -45,6 +45,19 @@ interface PaymentButtonProps {
   className?:string
 }
 
+interface CreateOrderResponse {
+  orderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+  pack: {
+    id: PackId;
+    label: string;
+    credits: number;
+    amountInInr: number;
+  };
+}
+
 // dynamically load razorpay's script only when needed
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -73,6 +86,15 @@ export function RazorpayPaymentButton({
   const pack = CREDIT_PACK[packId];
 
   async function handlePayment() {
+    if (!pack) {
+      console.error("[Payment] Invalid packId passed to RazorpayPaymentButton", {
+        packId,
+        availablePackIds: Object.keys(CREDIT_PACK),
+      });
+      setError("Selected credit pack is invalid. Please refresh and try again.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -94,11 +116,30 @@ export function RazorpayPaymentButton({
         body: JSON.stringify({ packId }),
       });
 
-      if (!orderResponse) {
-        throw new Error("Could not create payment order. Please try again.");
-      }
       const orderData = await orderResponse.json();
-      console.log("OrderData: ", orderData);
+      if (!orderResponse.ok) {
+        console.error("[Payment] create-order failed", {
+          packId,
+          pack,
+          orderData,
+        });
+        throw new Error(
+          orderData?.message ??
+            orderData?.error ??
+            "Could not create payment order. Please try again.",
+        );
+      }
+
+      if (!isCreateOrderResponse(orderData)) {
+        console.error("[Payment] create-order returned invalid pack details", {
+          packId,
+          localPack: pack,
+          orderData,
+        });
+        throw new Error("Payment order is missing pack details. Please try again.");
+      }
+
+      const checkoutDescription = `${orderData.pack.label} — ₹${orderData.pack.amountInInr} · ${orderData.pack.credits} blog credits`;
 
       const rzp = new window.Razorpay({
         key: orderData.keyId,
@@ -106,7 +147,7 @@ export function RazorpayPaymentButton({
         currency: orderData.currency,
         order_id: orderData.orderId,
         name: "BlogoAI",
-        description: `${orderData.pack.label} — ${orderData.pack.credits} blog credits`,
+        description: checkoutDescription,
         prefill: {
           name: userName,
           email: userEmail,
@@ -186,7 +227,9 @@ export function RazorpayPaymentButton({
       >
         {loading
           ? "Processing..."
-          : `Buy ${pack.label} — ₹${pack.amountInInr} (${pack.credit} credits)`}
+          : pack
+            ? `Buy ${pack.label} — ₹${pack.amountInInr} (${pack.credit} credits)`
+            : "Invalid pack"}
       </button>
 
       {error && (
@@ -200,5 +243,24 @@ export function RazorpayPaymentButton({
         </p>
       )}
     </div>
+  );
+}
+
+function isCreateOrderResponse(data: unknown): data is CreateOrderResponse {
+  if (!data || typeof data !== "object") return false;
+
+  const value = data as Partial<CreateOrderResponse>;
+  const pack = value.pack;
+
+  return (
+    typeof value.orderId === "string" &&
+    typeof value.amount === "number" &&
+    typeof value.currency === "string" &&
+    typeof value.keyId === "string" &&
+    !!pack &&
+    typeof pack.id === "string" &&
+    typeof pack.label === "string" &&
+    typeof pack.credits === "number" &&
+    typeof pack.amountInInr === "number"
   );
 }

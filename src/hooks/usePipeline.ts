@@ -264,7 +264,7 @@ export function usePipeline() {
           ...p,
           loading: false,
           running: false,
-          error: body.error ?? "Request failed",
+          error: body.message ?? body.error ?? "Request failed",
         }));
       }
       source.close();

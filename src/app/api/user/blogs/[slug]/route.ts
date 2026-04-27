@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateCurrentUser } from "@/lib/users";
 
 export async function GET(
   _req: Request,
@@ -12,14 +13,7 @@ export async function GET(
 
   const { slug } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { clearkId: clerkId },
-    select: { id: true },
-  });
-
-  if (!user) {
-    return Response.json({ error: "User not found" }, { status: 404 });
-  }
+  const user = await getOrCreateCurrentUser(clerkId);
 
   const blog = await prisma.blogPost.findFirst({
     where: {

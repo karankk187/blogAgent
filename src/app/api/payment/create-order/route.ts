@@ -2,6 +2,7 @@ import { clientEnv } from "@/config/env.client";
 import { razorpay } from "@/config/razorpay";
 import { CREDIT_PACK, PackId } from "@/lib/credit_pack";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateCurrentUser } from "@/lib/users";
 import {auth} from "@clerk/nextjs/server"
 import { NextRequest } from "next/server";
 
@@ -14,20 +15,30 @@ export async function POST(req:NextRequest) {
     }
 
     // read which pack user choose
-    const body = await req.json()
-    const packId = body.packId as PackId
+    let body: { packId?: unknown };
+    try {
+        body = await req.json()
+    } catch {
+        return Response.json({
+            error:"INVALID_REQUEST_BODY",
+            message:"Request body must be valid JSON."
+        },{status:400})
+    }
+    const packId = typeof body.packId === "string" ? body.packId : "";
     // validate
-    if(!packId || !CREDIT_PACK[packId]) {
-        return Response.json({error:"Invalid pack"},{status:401})
+    if(!isPackId(packId)) {
+        console.error("[PAYMENT INVALID PACK]: ", {
+            packId,
+            availablePackIds:Object.keys(CREDIT_PACK)
+        })
+        return Response.json({
+            error:"INVALID_PACK",
+            message:"Selected credit pack is invalid."
+        },{status:400})
     }
     const pack = CREDIT_PACK[packId]
 
-    const user =await prisma.user.findUnique({
-        where:{clearkId:clerkId}
-    })
-    if(!user) {
-        return Response.json({error:"user not found"},{status:400})
-    }
+    const user = await getOrCreateCurrentUser(clerkId);
 
     // create the order on razorpay
     try {
@@ -58,9 +69,10 @@ export async function POST(req:NextRequest) {
             currency:"INR",
             keyId:clientEnv.NEXT_PUBLIC_RAZORPAY_KEY_ID ,
             pack:{
+                id:pack.id,
                 label:pack.label,
                 credits:pack.credit,
-                amountInINR:pack.amountInInr
+                amountInInr:pack.amountInInr
             }
         })
 
@@ -69,4 +81,8 @@ export async function POST(req:NextRequest) {
         console.error("[RAZORPAY ORDER CREATION FAILED]: ",error)
         return Response.json({error:"could not create order"},{status:500})
     }
+}
+
+function isPackId(packId: string): packId is PackId {
+    return Object.prototype.hasOwnProperty.call(CREDIT_PACK, packId);
 }

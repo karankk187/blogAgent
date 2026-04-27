@@ -20,10 +20,8 @@ export async function POST(req:NextRequest) {
         return new Response("Missing svix headers", { status: 400 });
       }
 
-    //   get raw request body - for signature verification
-    // if you pass it to json first,the string change hence signature breaks
-    const payload = await req.json()
-    const body = JSON.stringify(payload)
+    // get raw request body - Svix verifies the exact bytes Clerk sent
+    const body = await req.text()
 
     // if signature fails , means request is not commingfrom cleark
     const wh = new Webhook(WEBHOOK_SECRET)
@@ -59,22 +57,25 @@ export async function POST(req:NextRequest) {
       }
 
       try {
-        // @ts-expect-error: Prisma tx type inference fails in Next.js build
         await prisma.$transaction(async (tx) => {
-          const user = await tx.user.upsert({
+          const existingUser = await tx.user.findUnique({
             where: { clearkId },
-            update: {},
-            create: {
-              clearkId,
-              email: primaryEmail.email_address,
-              name: [first_name, last_name].filter(Boolean).join(" ") || null,
-            },
+            include: { credit: true },
           });
 
-          const isNew = user.createdAt.getTime() === user.updatedAt.getTime();
-          if (isNew) {
+          const user =
+            existingUser ??
+            (await tx.user.create({
+              data: {
+                clearkId,
+                email: primaryEmail.email_address,
+                name: [first_name, last_name].filter(Boolean).join(" ") || null,
+              },
+            }));
+
+          if (!existingUser?.credit) {
             await tx.credit.create({
-              data: { userId: user.id, balance: 20 },
+              data: { userId: user.id, balance: 1 },
             });
             await tx.creditTransaction.create({
               data: {
@@ -101,5 +102,5 @@ export async function POST(req:NextRequest) {
       }
     }
 
-    
+    return new Response("Event ignored", { status: 200 });
 }

@@ -13,6 +13,18 @@ export const writerOutputSchema = z.object({
 })
 export type WriterOutput = z.infer<typeof writerOutputSchema>;
 
+function logEmptyWriterResponse(result: {
+  finalOutput?: unknown;
+  rawResponses?: unknown;
+  state?: unknown;
+}) {
+  console.error("[Writer Agent] empty or missing full_markdown.", {
+    finalOutput: result.finalOutput,
+    rawResponses: result.rawResponses,
+    state: result.state,
+  });
+}
+
 // const outputGuardrailAgent = new Agent({
 //   name: "Guardrail check",
 //   instructions: "Check if the output includes any math.",
@@ -108,12 +120,12 @@ export async function runWriterAgent(
 
   const result = await run(writerAgent, prompt);
 
-  if (!result.finalOutput) {
+  if (!result.finalOutput || !result.finalOutput.full_markdown?.trim()) {
+    logEmptyWriterResponse(result);
     throw new Error(
-      "[Writer Agent] returned no output. Check your model or prompt.",
+      "[Writer Agent] returned empty blog content. Check the logged API response.",
     );
   }
 
   return result.finalOutput;
 }
-

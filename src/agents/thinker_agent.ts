@@ -44,7 +44,3 @@ export async function runThinkerAgent(topic:string) {
 
     return result.finalOutput;
 }
-
-await runThinkerAgent(`let make a blog on Docker Model Runner.`)
-
-

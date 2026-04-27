@@ -1,7 +1,7 @@
 import { Agent, run } from "@openai/agents";
 import { z } from "zod";
-import { runThinkerAgent, ThinkerOutput } from "./thinker_agent";
-import { ResearcherOutput, runResearcherAgent } from "./researcher_agents";
+import { ThinkerOutput } from "./thinker_agent";
+import { ResearcherOutput } from "./researcher_agents";
 
 export const SectionPlanSchema = z.object({
   heading: z.string(),
@@ -67,8 +67,3 @@ ${JSON.stringify(researcherOutput, null, 2)}`,
 
   return result;
 }
-
-const topic = "run AI locally using- DOCKER MDOEL RUNNER";
-const thinkerResult = await runThinkerAgent(topic);
-const researcherResult = await runResearcherAgent(thinkerResult, topic);
-await runPlannerAgent(topic,thinkerResult,researcherResult)

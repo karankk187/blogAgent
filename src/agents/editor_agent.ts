@@ -1,9 +1,7 @@
 import { Agent ,run} from "@openai/agents";
 import {z} from "zod"
-import { runThinkerAgent, ThinkerOutput } from "./thinker_agent";
-import { runWriterAgent, WriterOutput } from "./writer_agent";
-import { runResearcherAgent } from "./researcher_agents";
-import { runPlannerAgent } from "./planner_agent";
+import { ThinkerOutput } from "./thinker_agent";
+import { WriterOutput } from "./writer_agent";
 
 
 export const editorOutputSchema = z.object({
@@ -74,21 +72,20 @@ List every change you made in changes_made.
 
     const agentStream = response.toTextStream()
 
+    let emittedContent = false
     for await (const value of agentStream) {
+        if(value.trim().length > 0) {
+          emittedContent = true
+        }
         yield value
     }
 
-
-}
-const topic = "run AI locally using- DOCKER MDOEL RUNNER";
-const thinkerResult = await runThinkerAgent(topic);
-const researcherResult = await runResearcherAgent(thinkerResult, topic);
-
-const plannerResult =  await runPlannerAgent(topic,thinkerResult,researcherResult)
-const writerResult =  await runWriterAgent(topic,thinkerResult,researcherResult,plannerResult)
-
-for await(const data of  streamEditorAgent(thinkerResult,writerResult)){
-  process.stdout.write(data)
+    if(!emittedContent) {
+      console.error("[Editor Agent] stream completed without content.", {
+        writerWordCount: writerOutput.word_count,
+        writerMarkdownLength: writerOutput.full_markdown?.length ?? 0,
+      });
+    }
 }
 
 // non streaming version

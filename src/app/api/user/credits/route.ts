@@ -1,5 +1,6 @@
 // Return current user's credit balance + transacition history using atomic state
 
+import { getOrCreateCurrentUser } from "@/lib/users";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
@@ -16,16 +17,8 @@ export async function GET() {
         return Response.json({error:"Unauthorized"},{status:401})
     }
 
-    const user = await prisma.user.findUnique({
-        where:{clearkId},
-        include:{
-            credit:true,
-            transcations:{
-                orderBy:{createdAt:"desc"},
-                take:20 //last 20 transacition
-            }
-        }
-    })
+    const ensuredUser = await getOrCreateCurrentUser(clearkId);
+    const user = await getUserWithTransactions(ensuredUser.id);
 
     if(!user || !user.credit) {
         // due to webhook invocation it doesnot happen
@@ -42,4 +35,17 @@ export async function GET() {
       },
     });
 
+}
+
+async function getUserWithTransactions(userId: string) {
+    return prisma.user.findUnique({
+        where:{id:userId},
+        include:{
+            credit:true,
+            transcations:{
+                orderBy:{createdAt:"desc"},
+                take:20 //last 20 transacition
+            }
+        }
+    })
 }

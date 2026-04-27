@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   const success = await addCredits(
     order.userId,
-    pack.amountInInr,
+    pack.credit,
     `${pack.label} pack — ₹${pack.amountInInr} `,
     razorpay_payment_id,
   );

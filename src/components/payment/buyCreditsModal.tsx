@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { CREDIT_PACK } from "@/lib/credit_pack";
+import { CREDIT_PACK, PackId } from "@/lib/credit_pack";
 import { RazorpayPaymentButton } from "./razorPayPaymentButton";
 
 
@@ -43,7 +43,7 @@ export function BuyCreditsModal({
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-3 mt-2">
-          {Object.values(CREDIT_PACK).map((pack) => (
+          {Object.entries(CREDIT_PACK).map(([packId, pack]) => (
             <div
               key={pack.id}
               className={`
@@ -79,7 +79,7 @@ export function BuyCreditsModal({
                     ₹{pack.amountInInr}
                   </span>
                   <RazorpayPaymentButton
-                    packId={pack.id as keyof typeof CREDIT_PACK}
+                    packId={packId as PackId}
                     userEmail={userEmail}
                     userName={userName}
                     onSuccess={handleSuccess}
