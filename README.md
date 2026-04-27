@@ -13,7 +13,7 @@
 [![Razorpay](https://img.shields.io/badge/Razorpay-02042B?style=flat-square&logo=razorpay&logoColor=3395FF)](https://razorpay.com)
 [![Neon](https://img.shields.io/badge/Neon_DB-00E599?style=flat-square&logo=postgresql&logoColor=black)](https://neon.tech)
 
-[Live Demo](https://blogagent.thissidemayur.me) · [Report Bug](https://github.com/thissidemayur/blogagent/issues) · [Request Feature](https://github.com/thissidemayur/blogagent/issues)
+[Live Demo](https://vercel.com/karankk187s-projects/p5-blog_agents) · [Report Bug](https://github.com/karankk187/blogAgent/issues) · [Request Feature](https://github.com/karankk187/blogAgent/issues)
 
 </div>
 
@@ -129,7 +129,7 @@ User clicks Buy → POST /api/payment/create-order (server creates Razorpay orde
 
 ```bash
 # Clone the repo
-git clone https://github.com/thissidemayur/blogagent.git
+git clone https://github.com/karankk187/blogAgent.git
 cd blogagent
 
 # Install dependencies
@@ -295,10 +295,6 @@ The slug is generated client-side so the URL is immediately available for naviga
 **Mayur** — 3rd year CS student, indie developer
 
 Building real products to learn real engineering.
-
-[![Portfolio](https://img.shields.io/badge/Portfolio-thissidemayur.me-black?style=flat-square)](https://thissidemayur.me)
-[![GitHub](https://img.shields.io/badge/GitHub-thissidemayur-181717?style=flat-square&logo=github)](https://github.com/thissidemayur)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin)](https://linkedin.com/in/thissiemayur)
 
 > Open to internships, freelance projects, and full-time roles after graduation.
 > If you're building something interesting, let's talk.
